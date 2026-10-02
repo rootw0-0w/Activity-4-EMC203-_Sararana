@@ -2,28 +2,22 @@ using UnityEngine;
 
 public class ShotgunTurret : MonoBehaviour
 {
-    [SerializeField] private Transform target;
+    private Transform target;
     [SerializeField] private float fireRange = 10f;
     [SerializeField] private float detectionConeAngle = 45f;
     [SerializeField] private GameObject bulletPrefab;
+    [SerializeField] private PlayerManager game;
 
-    private LineRenderer lineRenderer;
     private bool hasFired = false;
 
     void Start()
     {
-        // renderer is automatically setup when played
-        lineRenderer = GetComponent<LineRenderer>();
-        lineRenderer.positionCount = 3;
-        lineRenderer.loop = true;
-        lineRenderer.useWorldSpace = true;
     }
 
     void Update()
     {
         
-        DrawSimpleCone();
-
+        target = FindCreature();//forces the turrets to look for the creature
         if (target == null) return;
 
         Vector3 direction = target.position - transform.position;
@@ -55,18 +49,18 @@ public class ShotgunTurret : MonoBehaviour
         float delta = Mathf.Abs(Mathf.DeltaAngle(tAngle, pAngle));
         return delta <= coneAngle / 2f;
     }
-
-    void DrawSimpleCone()
+    Transform FindCreature()
     {
-        Vector3 origin = transform.position;
-        //Creates a line based on turret detection shape 
-        Vector3 leftDir = Quaternion.Euler(0, transform.eulerAngles.y - (detectionConeAngle / 2f), 0) * Vector3.forward;
-        Vector3 rightDir = Quaternion.Euler(0, transform.eulerAngles.y + (detectionConeAngle / 2f), 0) * Vector3.forward;
-
-        lineRenderer.SetPosition(0, origin);
-        lineRenderer.SetPosition(1, origin + (leftDir * fireRange));
-        lineRenderer.SetPosition(2, origin + (rightDir * fireRange));
+        GameObject[] creatures = GameObject.FindGameObjectsWithTag("Creature"); 
+        foreach (GameObject c in creatures)//keeps detecting if there are more than one creature
+        {
+            if (c == null) continue; 
+            return c.transform;
+        }
+        return null;
     }
+    
+
 
     void FireShotgunSpread() 
     {
@@ -77,6 +71,7 @@ public class ShotgunTurret : MonoBehaviour
             Quaternion bulletRotation = Quaternion.Euler(0, angleOffset, 0);
             
             GameObject bullet = Instantiate(bulletPrefab, this.transform.position, bulletRotation);
+            bullet.GetComponent<Turret>().game = game; //contains player manager script to pass on bullet
             Destroy(bullet, 3f);
         }    
     }

@@ -2,14 +2,16 @@ using UnityEngine;
 
 public class SniperTurret : MonoBehaviour
 {
-    [SerializeField] private Transform target;
+    private Transform target;
     [SerializeField] private float rotSpeed = 10f; 
     [SerializeField] private GameObject bulletPrefab;
+    [SerializeField] private PlayerManager game;
     
     private bool hasFired = false; //using bool to ensure single shot
 
     void Update()
     {
+        target = FindCreature();//forces the turrets to look for the creature
         if (target == null) return;
 
         Vector3 direction = target.position - this.transform.position;
@@ -22,7 +24,8 @@ public class SniperTurret : MonoBehaviour
 
         
         float dot = Vector3.Dot(barrel, toPlayer);
-        bool inSights = dot >= 0.98f; 
+        bool inSights = dot >= 0.9f; 
+
 
         if (inSights)
         {
@@ -39,12 +42,23 @@ public class SniperTurret : MonoBehaviour
         }
     }
 
+     Transform FindCreature()
+    {
+        GameObject[] creatures = GameObject.FindGameObjectsWithTag("Creature");
+        foreach (GameObject c in creatures)//keeps detecting if there are more than one creature
+        {
+            if (c == null) continue;
+            return c.transform;
+        }
+        return null;
+    }
+
     void ShootProjectile()
     {
         if (bulletPrefab != null)
         {
             GameObject bullet = Instantiate(bulletPrefab, this.transform.position, this.transform.rotation);
-            
+             bullet.GetComponent<Turret>().game = game; //contains player manager script to pass on bullet
              Destroy(bullet, 3f);
         }
     }
